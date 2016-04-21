@@ -1,6 +1,8 @@
 package cheeseproducts.customizeddisplay;
 
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -11,10 +13,12 @@ import android.graphics.Rect;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -27,9 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
-
-    final int[] color = {Color.WHITE,Color.GRAY,Color.MAGENTA};
-    int number=0;
+    View view;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +46,23 @@ public class MainActivity extends AppCompatActivity {
         final TextView textView2 = (TextView)findViewById(R.id.textView2);
         final TextView textView3 = (TextView)findViewById(R.id.textView3);
 
+        view = this.getWindow().getDecorView();
+
+        final View decorView = getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener (new View.OnSystemUiVisibilityChangeListener() {
+            @Override
+            public void onSystemUiVisibilityChange(int visibility) {
+                if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                    decorView.setSystemUiVisibility(
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                }
+            }
+        });
 
 
 
@@ -74,28 +93,64 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        final View view = this.getWindow().getDecorView();
 
-        int colorFrom = color[0];
-        int colorTo = color[2];
-        final ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-        colorAnimation.setDuration(3000); // milliseconds
-        colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 
-            @Override
-            public void onAnimationUpdate(ValueAnimator animator) {
-                view.setBackgroundColor((int) animator.getAnimatedValue());
-            }
 
-        });
-        ValueAnimator colorAnim = ObjectAnimator.ofInt(view, "backgroundColor", Color.GREEN,Color.WHITE,Color.RED,Color.BLUE,Color.MAGENTA,Color.YELLOW);
+        /*ValueAnimator colorAnim = ObjectAnimator.ofInt(view, "backgroundColor", Color.GREEN,Color.WHITE,Color.RED,Color.BLUE,Color.MAGENTA,Color.YELLOW);
 
         colorAnim.setDuration(30000);
         colorAnim.setEvaluator(new ArgbEvaluator());
         colorAnim.setRepeatCount(ValueAnimator.INFINITE);
         colorAnim.setRepeatMode(ValueAnimator.REVERSE);
-        colorAnim.start();
+        colorAnim.start();*/
         t.start();
 
+        generateNew(Color.WHITE);
     }
+
+    public void colorAnimations(int color, int color1, int color2){
+        final ValueAnimator anim = ObjectAnimator.ofInt(view, "backgroundColor", color,color1,color2);
+        anim.setDuration(30000);
+        anim.setEvaluator(new ArgbEvaluator());
+        anim.start();
+
+        final int previous = color2;
+        anim.addListener(new AnimatorListenerAdapter()
+        {
+            @Override
+            public void onAnimationEnd(Animator animation)
+            {
+                generateNew(previous);
+            }
+        });
+    }
+
+    public void generateNew(int previous)
+    {
+        Random random = new Random();
+
+
+        Log.e("Generator","Called");
+        final int color = Color.rgb(random.nextInt(256),random.nextInt(256),random.nextInt(256));
+        final int color1 = Color.rgb(random.nextInt(256),random.nextInt(256),random.nextInt(256));
+        final int color2 = Color.rgb(random.nextInt(256),random.nextInt(256),random.nextInt(256));
+
+
+        final ValueAnimator anim = ObjectAnimator.ofInt(view, "backgroundColor", previous,color);
+        anim.setDuration(5000);
+        anim.setEvaluator(new ArgbEvaluator());
+        anim.start();
+
+        anim.addListener(new AnimatorListenerAdapter()
+        {
+            @Override
+            public void onAnimationEnd(Animator animation)
+            {
+                colorAnimations(color,color1,color2);
+            }
+        });
+
+
+    }
+
 }
